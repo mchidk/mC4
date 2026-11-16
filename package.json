@@ -1,0 +1,45 @@
+{
+  "name": "mc4",
+  "version": "0.1.0",
+  "description": "Fast, grounded C4 architecture documentation skill and markdown validator for Claude Code, OpenCode, Codex, and Antigravity",
+  "type": "module",
+  "author": "Michael Christensen",
+  "main": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js"
+    }
+  },
+  "bin": {
+    "mc4": "./src/cli.js"
+  },
+  "files": [
+    "SKILL.md",
+    "references",
+    "templates",
+    "src",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "check": "node src/cli.js check",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "c4",
+    "c4-model",
+    "architecture",
+    "mermaid",
+    "markdown",
+    "agent-skill",
+    "opencode",
+    "claude-code",
+    "codex",
+    "antigravity"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}
