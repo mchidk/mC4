@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
@@ -103,5 +103,41 @@ describe("mc4 CLI", () => {
   it("refuses to overwrite mC4 repo adapters during install", () => {
     const out = runCli(["install", "--project", "--dir", REPO_ROOT], REPO_ROOT);
     assert.match(out, /Skipped \[claude\]/);
+  });
+
+  it("refuses to touch mC4 repo adapters when the path differs only in case", { skip: process.platform !== "win32" && process.platform !== "darwin" }, () => {
+    const variant = REPO_ROOT.replace(/[a-z]/gi, (c) => (c === c.toLowerCase() ? c.toUpperCase() : c.toLowerCase()));
+    const out = runCli(["uninstall", "--project", "--dir", variant, "--dry-run"], REPO_ROOT);
+    assert.match(out, /Skipped \[claude\]/);
+    assert.doesNotMatch(out, /Would remove/);
+  });
+
+  it("does not overwrite or remove a c4 skill that mC4 did not install", () => {
+    const foreignDir = path.join(tmpDir, ".claude", "skills", "c4");
+    const foreignSkill = path.join(foreignDir, "SKILL.md");
+    mkdirSync(foreignDir, { recursive: true });
+    writeFileSync(foreignSkill, "---\nname: c4\n---\nSomeone else's skill\n");
+
+    const installOut = runCli(["install", "--project", "--claude", "--dir", tmpDir], REPO_ROOT);
+    assert.match(installOut, /Skipped \[claude\].*not installed by mC4/);
+    assert.match(readFileSync(foreignSkill, "utf8"), /Someone else's skill/);
+
+    const uninstallOut = runCli(["uninstall", "--project", "--claude", "--dir", tmpDir], REPO_ROOT);
+    assert.match(uninstallOut, /Skipped \[claude\]/);
+    assert.equal(existsSync(foreignSkill), true);
+
+    runCli(["install", "--project", "--claude", "--force", "--dir", tmpDir], REPO_ROOT);
+    assert.doesNotMatch(readFileSync(foreignSkill, "utf8"), /Someone else's skill/);
+  });
+
+  it("uninstall keeps user-added files in the skill directory", () => {
+    runCli(["install", "--project", "--claude", "--dir", tmpDir], REPO_ROOT);
+    const notes = path.join(tmpDir, ".claude", "skills", "c4", "my-notes.md");
+    writeFileSync(notes, "keep me\n");
+
+    runCli(["uninstall", "--project", "--claude", "--dir", tmpDir], REPO_ROOT);
+    assert.equal(existsSync(notes), true);
+    assert.equal(existsSync(path.join(tmpDir, ".claude", "skills", "c4", "SKILL.md")), false);
+    assert.equal(existsSync(path.join(tmpDir, ".claude", "skills", "c4", "src")), false);
   });
 });

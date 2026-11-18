@@ -1,6 +1,6 @@
 {
   "name": "mc4",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fast, grounded C4 architecture documentation skill and markdown validator for Claude Code, OpenCode, Codex, and Antigravity",
   "type": "module",
   "author": "Michael Christensen",

@@ -4,6 +4,17 @@ All notable changes to mC4.
 
 **Author:** Michael Christensen
 
+## 0.1.1 - 2026-11-18
+
+### Fixed
+
+- Installer: the guard protecting the mC4 source repo now compares canonical, case-folded paths, so `uninstall --dir` with a differently-cased path on Windows/macOS can no longer delete the repo's own skill adapters.
+- Installer: `uninstall` only removes a c4 skill that mC4 installed (tracked via `.mc4-install.json`), deletes only mC4's own files, and keeps user-added files; `install` no longer silently overwrites a foreign c4 skill unless `--force` is passed.
+- Validator: `BiRel(...)` now counts as a relationship.
+- Validator: apostrophes in unquoted Mermaid text (e.g. `title Bob's System`) no longer hide unbalanced boundary braces.
+- Validator: links with any URL scheme (`ftp:`, `tel:`, …) or protocol-relative `//host` are treated as external; URL-encoded paths and `?query` suffixes are resolved correctly; link examples inside inline code are ignored.
+- Skill: validation step now points at the skill's bundled `src/check.js` instead of the target project's `src/`.
+
 ## 0.1.0 - 2026-11-16
 
 ### Skill

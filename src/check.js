@@ -132,34 +132,25 @@ function diagramKind(diagram, pattern) {
 }
 
 function hasRelationship(diagram) {
-  return /\bRel(?:_[A-Za-z]+)?\s*\(/.test(diagram) || /-->|---|==>|-\.->|->>|-->>|<--/.test(diagram);
+  return /\b(?:Bi)?Rel(?:_[A-Za-z]+)?\s*\(/.test(diagram) || /-->|---|==>|-\.->|->>|-->>|<--/.test(diagram);
 }
 
 function hasBalancedBraces(diagram) {
   let depth = 0;
-  let inQuote = false;
-  let quoteChar = "";
-  let escaped = false;
 
   for (const line of diagram.split(/\r?\n/)) {
     if (line.trim().startsWith("%%")) {
       continue;
     }
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (inQuote) {
-        if (escaped) {
-          escaped = false;
-        } else if (ch === "\\") {
-          escaped = true;
-        } else if (ch === quoteChar) {
-          inQuote = false;
-        }
+    // Mermaid strings are double-quoted and never span lines; an apostrophe in
+    // unquoted text (e.g. `title Bob's System`) must not open a string.
+    let inQuote = false;
+    for (const ch of line) {
+      if (ch === '"') {
+        inQuote = !inQuote;
         continue;
       }
-      if (ch === '"' || ch === "'") {
-        inQuote = true;
-        quoteChar = ch;
+      if (inQuote) {
         continue;
       }
       if (ch === "{") {
@@ -213,7 +204,10 @@ function checkMetadata(body, shownPath, issues) {
 
 function markdownLinks(body) {
   const links = [];
-  const prose = proseLines(body).join("\n");
+  // Skip fenced blocks and inline code spans so documented link syntax is not checked.
+  const prose = proseLines(body)
+    .join("\n")
+    .replace(/(`+)[^`]*?\1/g, "");
   const pattern = /\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
   let match;
   while ((match = pattern.exec(prose)) !== null) {
@@ -222,17 +216,34 @@ function markdownLinks(body) {
   return links;
 }
 
+/**
+ * Returns the local file part of a link target, or undefined for external
+ * URLs (any scheme), protocol-relative URLs, and pure anchors. Single-letter
+ * "schemes" are left alone because they are Windows drive letters.
+ */
+function localLinkPath(target) {
+  if (/^([a-z][a-z0-9+.-]+:|\/\/|#)/i.test(target)) {
+    return undefined;
+  }
+  const clean = target.split(/[?#]/)[0];
+  if (!clean) {
+    return undefined;
+  }
+  try {
+    return decodeURIComponent(clean);
+  } catch {
+    return clean;
+  }
+}
+
 function checkLinks(root, filePath, body, issues) {
   const shown = displayPath(root, filePath);
   for (const link of markdownLinks(body)) {
-    if (/^(https?:|mailto:|#)/i.test(link.target)) {
+    const local = localLinkPath(link.target);
+    if (local === undefined) {
       continue;
     }
-    const clean = link.target.split("#")[0];
-    if (!clean) {
-      continue;
-    }
-    const target = resolve(dirname(filePath), clean);
+    const target = resolve(dirname(filePath), local);
     if (!existsSync(target)) {
       issues.push({
         code: "c4/broken-link",
@@ -406,8 +417,9 @@ export function checkC4Docs(root, options = {}) {
 
     const linkedTargets = new Set(
       markdownLinks(readmeBody)
-        .filter((link) => !/^(https?:|mailto:|#)/i.test(link.target))
-        .map((link) => resolve(dirname(readmePath), link.target.split("#")[0] ?? "").toLowerCase()),
+        .map((link) => localLinkPath(link.target))
+        .filter((local) => local !== undefined)
+        .map((local) => resolve(dirname(readmePath), local).toLowerCase()),
     );
     for (const level of REQUIRED_LEVELS) {
       if (!linkedTargets.has(resolve(c4Path, level.file).toLowerCase())) {

@@ -49,10 +49,10 @@ Follow [`references/mermaid-and-grounding.md`](references/mermaid-and-grounding.
 
 ### 4. Validate fast
 
-Run the standalone validator in one command:
+Run the standalone validator bundled with this skill from the repository root, where `<skill-dir>` is the folder containing this `SKILL.md` (for example `.claude/skills/c4`, `.opencode/skills/c4`, or `.agents/skills/c4`):
 
 ```bash
-node src/check.js .
+node <skill-dir>/src/check.js .
 ```
 
 If `mc4` is installed or linked in the project, `npx mc4 check` runs the same check. Fix any reported structural, link, Mermaid, or `Source:` path error directly and re-run until green.

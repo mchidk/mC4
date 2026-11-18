@@ -210,4 +210,52 @@ describe("checkC4Docs", () => {
       },
     );
   });
+
+  it("accepts BiRel as a relationship", () => {
+    withFixture(
+      {
+        "docs/c4/01-context.md": BASE_FILES["docs/c4/01-context.md"].replace(
+          '  Rel(user, sys, "Uses", "HTTPS")',
+          '  BiRel(user, sys, "Talks with")',
+        ),
+      },
+      (root) => {
+        const report = checkC4Docs(root);
+        assert.equal(report.ok, true, JSON.stringify(report.issues));
+      },
+    );
+  });
+
+  it("does not let an apostrophe in unquoted text hide unbalanced braces", () => {
+    withFixture(
+      {
+        "docs/c4/02-containers.md": BASE_FILES["docs/c4/02-containers.md"]
+          .replace("C4Container\n", "C4Container\n  title Bob's System\n")
+          .replace("  }\n", ""),
+      },
+      (root) => {
+        const codes = checkC4Docs(root).issues.map((i) => i.code);
+        assert.ok(codes.includes("c4/unbalanced-braces"));
+      },
+    );
+  });
+
+  it("ignores external schemes and inline-code examples, and decodes encoded paths", () => {
+    withFixture(
+      {
+        "src/my app.js": "",
+        "docs/c4/README.md": [
+          BASE_FILES["docs/c4/README.md"],
+          "[FTP](ftp://example.com/x) [Tel](tel:+4512345678) [Proto](//example.com/x)",
+          "[Spaced](../../src/my%20app.js) [Query](01-context.md?plain=1#top)",
+          "Use `[label](missing.md)` syntax for links.",
+          "",
+        ].join("\n"),
+      },
+      (root) => {
+        const report = checkC4Docs(root);
+        assert.equal(report.ok, true, JSON.stringify(report.issues));
+      },
+    );
+  });
 });

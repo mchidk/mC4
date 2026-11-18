@@ -113,8 +113,9 @@ function cmdInstall(args, cwd) {
   const targetDir = getOptionValue(args, "--dir");
   const effectiveCwd = targetDir ? path.resolve(cwd, targetDir) : cwd;
   const dryRun = args.includes("--dry-run");
+  const force = args.includes("--force");
 
-  const results = installSkill({ harnesses, scope, cwd: effectiveCwd, dryRun });
+  const results = installSkill({ harnesses, scope, cwd: effectiveCwd, dryRun, force });
   for (const item of results) {
     const label = item.harnesses.join(", ");
     if (item.status === "skipped") {
@@ -189,7 +190,7 @@ Options:
   --project         Target project-local skill directories (default inside git repos)
   --global          Target user global skill directories
   --dir <path>      Target repository root (for install/status) or C4 folder (for check/init)
-  --force           Overwrite existing template files during init
+  --force           Overwrite existing template files (init) or a non-mC4 c4 skill (install)
   --dry-run         Preview install/uninstall actions without writing files
   --json            Emit JSON output for check
   --help, -h        Show this help message

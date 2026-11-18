@@ -3,8 +3,12 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
+  readFileSync,
+  realpathSync,
+  rmdirSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -21,6 +25,7 @@ export const SKILL_NAME = "c4";
 export const HARNESSES = ["claude", "opencode", "codex", "antigravity"];
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const MARKER_FILE = ".mc4-install.json";
 
 function getXdgConfigHome() {
   return process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
@@ -90,13 +95,68 @@ function collectSkillFiles() {
   return entries;
 }
 
+/**
+ * Resolve a path to its canonical on-disk form (true case, symlinks resolved)
+ * even if its tail does not exist yet.
+ */
+function canonicalPath(target) {
+  let existing = path.resolve(target);
+  const rest = [];
+  while (!existsSync(existing)) {
+    const parent = path.dirname(existing);
+    if (parent === existing) {
+      return path.resolve(target);
+    }
+    rest.unshift(path.basename(existing));
+    existing = parent;
+  }
+  try {
+    return path.join(realpathSync.native(existing), ...rest);
+  } catch {
+    return path.resolve(target);
+  }
+}
+
 function isInsidePackageSource(targetDir) {
-  const resolvedTarget = path.resolve(targetDir);
-  const resolvedRoot = path.resolve(PACKAGE_ROOT);
+  // Windows and macOS file systems are case-insensitive by default.
+  const fold = (p) => (process.platform === "win32" || process.platform === "darwin" ? p.toLowerCase() : p);
+  const resolvedTarget = fold(canonicalPath(targetDir));
+  const resolvedRoot = fold(canonicalPath(PACKAGE_ROOT));
   return (
     resolvedTarget === resolvedRoot ||
     resolvedTarget.startsWith(resolvedRoot + path.sep)
   );
+}
+
+/**
+ * True when `dir` holds a c4 skill that mC4 installed (marker file present,
+ * or an unmodified copy of this package's SKILL.md).
+ */
+function isManagedSkillDir(dir) {
+  if (existsSync(path.join(dir, MARKER_FILE))) {
+    return true;
+  }
+  try {
+    return readFileSync(path.join(dir, "SKILL.md"), "utf8") === readFileSync(path.join(PACKAGE_ROOT, "SKILL.md"), "utf8");
+  } catch {
+    return false;
+  }
+}
+
+function hasForeignSkill(dir) {
+  return existsSync(dir) && readdirSync(dir).length > 0 && !isManagedSkillDir(dir);
+}
+
+function removeEmptyDirs(dir) {
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) {
+    return;
+  }
+  for (const name of readdirSync(dir)) {
+    removeEmptyDirs(path.join(dir, name));
+  }
+  if (readdirSync(dir).length === 0) {
+    rmdirSync(dir);
+  }
 }
 
 /**
@@ -123,7 +183,7 @@ export function resolveTargets({ harnesses = HARNESSES, scope, cwd }) {
 /**
  * Install self-contained `c4` skill files into one or more harness directories.
  */
-export function installSkill({ harnesses = HARNESSES, scope, cwd, dryRun = false }) {
+export function installSkill({ harnesses = HARNESSES, scope, cwd, dryRun = false, force = false }) {
   const targets = resolveTargets({ harnesses, scope, cwd });
   const files = collectSkillFiles();
   const results = [];
@@ -139,6 +199,16 @@ export function installSkill({ harnesses = HARNESSES, scope, cwd, dryRun = false
       continue;
     }
 
+    if (!force && hasForeignSkill(target.dir)) {
+      results.push({
+        ...target,
+        status: "skipped",
+        reason: "Existing c4 skill was not installed by mC4; pass --force to overwrite",
+        files: [],
+      });
+      continue;
+    }
+
     const written = files.map((file) => path.join(target.dir, file.rel));
     if (!dryRun) {
       for (const file of files) {
@@ -146,6 +216,7 @@ export function installSkill({ harnesses = HARNESSES, scope, cwd, dryRun = false
         mkdirSync(path.dirname(dest), { recursive: true });
         copyFileSync(file.src, dest);
       }
+      writeFileSync(path.join(target.dir, MARKER_FILE), `${JSON.stringify({ installedBy: "mc4" })}\n`);
     }
 
     results.push({
@@ -180,8 +251,23 @@ export function uninstallSkill({ harnesses = HARNESSES, scope, cwd, dryRun = fal
       continue;
     }
 
+    if (!isManagedSkillDir(target.dir)) {
+      results.push({
+        ...target,
+        status: "skipped",
+        reason: "c4 skill here was not installed by mC4; leaving it untouched",
+      });
+      continue;
+    }
+
+    // Remove only the files mC4 installs, then prune empty folders, so any
+    // user-added files in the skill directory survive.
     if (!dryRun) {
-      rmSync(target.dir, { recursive: true, force: true });
+      for (const file of collectSkillFiles()) {
+        rmSync(path.join(target.dir, file.rel), { force: true });
+      }
+      rmSync(path.join(target.dir, MARKER_FILE), { force: true });
+      removeEmptyDirs(target.dir);
     }
     results.push({ ...target, status: dryRun ? "dry-run" : "removed" });
   }
