@@ -19,7 +19,18 @@ Every C4 `.md` file (`README.md`, `01-context.md`, `02-containers.md`, `03-compo
 - A level-1 heading (`# Title`)
 - `- **Status:** draft | proposed | accepted | verified`
 - `- **Owner:** <real owner or VERIFY: assign owner>`
-- `- **Last reviewed:** YYYY-MM-DD`
+- `- **Last reviewed:** YYYY-MM-DD` (today's date whenever the file changes)
+
+Document `Status` values:
+
+| Status | Meaning | Who sets it |
+|---|---|---|
+| `draft` | Work in progress; not yet reviewed | Agent default |
+| `proposed` | Describes intended design that is not fully built | Agent, when documenting planned work |
+| `accepted` | Reviewed and approved by the owner | Only on explicit human confirmation |
+| `verified` | Owner confirmed it matches the running system | Only on explicit human confirmation |
+
+This document-level `Status` is separate from the per-container status column in `02-containers.md` (`live`, `local-only`, `proposed`, or `VERIFY:`).
 
 ## File Expectations
 

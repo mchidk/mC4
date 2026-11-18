@@ -24,8 +24,8 @@ C4Container
 
 | Container | Technology | Responsibility | Owned State | Identity / Auth | Status |
 |---|---|---|---|---|---|
-| Application | Runtime / Language | Core logic and API | None (stateless) | VERIFY: auth mechanism | draft |
-| Data Store | Database Engine | Durable records | Primary entities | Service credentials | draft |
+| Application | Runtime / Language | Core logic and API | None (stateless) | VERIFY: auth mechanism | VERIFY: live, local-only, or proposed |
+| Data Store | Database Engine | Durable records | Primary entities | Service credentials | VERIFY: live, local-only, or proposed |
 
 ## Deployment and Failure Notes
 

@@ -391,7 +391,7 @@ export function checkC4Docs(root, options = {}) {
     issues.push({
       code: "c4/missing-directory",
       file: c4Dir,
-      message: `C4 documentation directory not found; run "mc4 init" to scaffold ${c4Dir}`,
+      message: `C4 documentation directory not found; copy the starter files from the c4 skill's templates/ into ${c4Dir} (or pass --dir if the docs live elsewhere)`,
     });
     return { ok: false, root: resolvedRoot, c4Dir, checkedFiles: 0, issues };
   }

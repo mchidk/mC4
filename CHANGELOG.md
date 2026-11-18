@@ -15,6 +15,16 @@ All notable changes to mC4.
 - Validator: links with any URL scheme (`ftp:`, `tel:`, …) or protocol-relative `//host` are treated as external; URL-encoded paths and `?query` suffixes are resolved correctly; link examples inside inline code are ignored.
 - Skill: validation step now points at the skill's bundled `src/check.js` instead of the target project's `src/`.
 
+### Skill prompt
+
+- Removed `npx mc4` from the skill and README: `mc4` is not on the npm registry, so a bare `npx mc4` fails or could run an unrelated package. The skill now scaffolds by copying its bundled `templates/`; the README uses `npx github:mchidk/mC4`.
+- Required replacing template placeholders, since unedited templates pass the validator.
+- Defined document `Status` values and forbade agents from self-promoting docs to `accepted`/`verified`; `Owner` falls back to `VERIFY: assign owner`; `Last reviewed` is today's date.
+- Added `--dir` guidance for existing architecture folders, deployment/IaC/CI discovery, `Source:` path rules (no line suffixes), and a final report step listing `VERIFY:` items and contradictions.
+- Added Mermaid syntax rules the validator cannot check (aliases, declared `Rel` endpoints, quoting, supported C4 vocabulary).
+- Separated document `Status` from the per-container status column; fixed the containers template using `draft` there.
+- Aligned harness adapter descriptions with the root skill and clarified `<skill-dir>` inside this repository.
+
 ## 0.1.0 - 2026-11-16
 
 ### Skill

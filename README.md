@@ -30,21 +30,21 @@ mC4 provides a streamlined `c4` agent skill and zero-dependency CLI (`mc4`) that
 
 ### CLI (recommended)
 
-Install the self-contained `c4` skill into your project's agent directories:
+Install the self-contained `c4` skill into your project's agent directories. mC4 is not published to the npm registry, so run it straight from GitHub — do not use a bare `npx mc4`, which would resolve to whatever package claims that name on npm:
 
 ```bash
-npx mc4 install --project
+npx github:mchidk/mC4 install --project
 ```
 
 Options:
 
 ```bash
-npx mc4 install --project                # Install to .claude, .opencode, and .agents in current repo
-npx mc4 install --global                 # Install to user-global skill directories
-npx mc4 install --claude --opencode      # Target specific harnesses (--claude, --opencode, --codex, --antigravity, --all)
-npx mc4 install --dry-run                # Preview target paths without writing files
-npx mc4 status                           # Show installed skill status and docs/c4 presence
-npx mc4 uninstall --project              # Remove installed project skill directories
+npx github:mchidk/mC4 install --project    # Install to .claude, .opencode, and .agents in current repo
+npx github:mchidk/mC4 install --global     # Install to user-global skill directories
+npx github:mchidk/mC4 install --claude --opencode  # Target specific harnesses (--claude, --opencode, --codex, --antigravity, --all)
+npx github:mchidk/mC4 install --dry-run    # Preview target paths without writing files
+npx github:mchidk/mC4 status               # Show installed skill status and docs/c4 presence
+npx github:mchidk/mC4 uninstall --project  # Remove installed project skill directories
 ```
 
 ### Local checkout
@@ -83,14 +83,14 @@ Or invoke `/c4` (Claude Code / OpenCode) or `$c4` (Codex) where supported.
 Create starter `.md` templates in `docs/c4/`:
 
 ```bash
-npx mc4 init
+npx github:mchidk/mC4 init
 ```
 
 Validate existing C4 documentation:
 
 ```bash
-npx mc4 check
-npx mc4 check --dir architecture/c4 --json
+npx github:mchidk/mC4 check
+npx github:mchidk/mC4 check --dir architecture/c4 --json
 ```
 
 Or run the standalone validator directly without installing:

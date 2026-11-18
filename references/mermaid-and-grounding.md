@@ -48,6 +48,17 @@ C4Component
     Rel(service, db, "Queries", "SQL")
 ```
 
+### Syntax rules (not checked by the validator)
+
+Mermaid C4 support is experimental and a diagram that breaks these rules fails to render even when `check.js` passes:
+
+1. Element aliases (the first argument) are unique identifiers using only letters, digits, and underscores — no spaces, hyphens, or dots (`order_api`, not `order-api`).
+2. Every `Rel(...)` endpoint is an alias declared in the same diagram.
+3. Labels are double-quoted strings; never put a `"` inside a label.
+4. One element or relationship per line. A boundary opens with `{` at the end of its declaration line and closes with `}` on its own line.
+5. Use only the Mermaid C4 vocabulary: `Person`, `Person_Ext`, `System`, `System_Ext`, `SystemDb`, `SystemQueue`, `Container`, `ContainerDb`, `ContainerQueue`, `Container_Ext`, `Component`, `ComponentDb`, `ComponentQueue`, `Enterprise_Boundary`, `System_Boundary`, `Container_Boundary`, `Boundary`, `Rel`, `BiRel`, `Rel_U`/`Rel_D`/`Rel_L`/`Rel_R`/`Rel_Back`, `UpdateLayoutConfig`. PlantUML C4 features such as `!include`, `LAYOUT_*`, and `SHOW_LEGEND()` are not supported.
+6. In `flowchart`/`graph`, quote any node label containing parentheses, brackets, or other punctuation (`api["API (Node.js)"]`), and do not use `end` as a node id.
+
 ### Diagram review checklist
 
 1. Every element has a clear name and one-line responsibility.
@@ -69,7 +80,7 @@ Never put secrets, API keys, tokens, connection strings, real customer names, or
 
 | Code | Meaning | Fix |
 |---|---|---|
-| `c4/missing-directory` | Target `docs/c4` folder does not exist | Run `mc4 init` or create `docs/c4/` |
+| `c4/missing-directory` | Target `docs/c4` folder does not exist | Copy the starter files from `templates/`, or pass `--dir` if docs live elsewhere |
 | `c4/missing-file` | Required index or level `.md` file is missing | Create the missing file from `templates/` |
 | `c4/missing-title` | File has no `# Title` heading | Add a level-1 heading |
 | `c4/missing-metadata` | Missing `Status`, `Owner`, or `Last reviewed` | Add the missing metadata bullet |
